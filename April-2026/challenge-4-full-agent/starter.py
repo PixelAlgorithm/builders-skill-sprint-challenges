@@ -11,9 +11,9 @@ Instructions:
 
 import os
 os.environ["BYPASS_TOOL_CONSENT"] = "true"
-
+import requests
 from datetime import date, datetime
-
+from dateutil.relativedelta import relativedelta
 MODEL = "us.amazon.nova-pro-v1:0"
 
 
@@ -22,7 +22,8 @@ MODEL = "us.amazon.nova-pro-v1:0"
 # ============================================================
 # Hint: You need Agent, tool from strands
 #       calculator, mem0_memory from strands_tools
-
+from strands import Agent, tool
+from strands_tools import calculator,mem0_memory
 # Your imports here
 
 
@@ -37,7 +38,11 @@ MODEL = "us.amazon.nova-pro-v1:0"
 #     elif "current_tool_use" in kwargs and kwargs["current_tool_use"].get("name"):
 #         print(f"\n🔧 Using tool: {kwargs['current_tool_use']['name']}")
 
-# Your callback here
+def stream_callback(**kwargs):
+    if "data" in kwargs:
+        print(kwargs["data"], end="", flush=True)
+    elif "current_tool_use" in kwargs and kwargs["current_tool_use"].get("name"):
+        print(f"\n🔧 Using tool: {kwargs['current_tool_use']['name']}")
 
 
 # ============================================================
@@ -46,7 +51,36 @@ MODEL = "us.amazon.nova-pro-v1:0"
 # Reuse your code from Challenge 2!
 
 # Your tools here
+@tool
+def weather(city: str) -> str:
+  """This tool is used to get weather for a city
+    Args :
+      city: name of the city
+  """
+  url= f"https://wttr.in/{city}?format=j1"
+  response = requests.get(url)
+  data = response.json()
 
+  current = data["current_condition"][0]
+
+  return (
+        f"Weather in {city}: "
+        f"{current['temp_C']}°C, "
+        f"{current['weatherDesc'][0]['value']}"
+    )
+
+
+@tool
+def age_calculator(birth_date: str) -> str:
+    """Calculate age from a birth date."""
+
+    birth_date = birth_date.replace("/", "-")
+
+    dob = datetime.strptime(birth_date, "%Y-%m-%d").date()
+
+    age = relativedelta(date.today(), dob)
+
+    return f"{age.years} years, {age.months} months, {age.days} days"
 
 # ============================================================
 # TODO 4: Create the full agent with ALL tools + memory + streaming
@@ -58,7 +92,17 @@ MODEL = "us.amazon.nova-pro-v1:0"
 #     system_prompt="..."
 # )
 
-agent = None  # Replace this line
+prompt = "You are a Ai assitent called Pixie ," \
+"To resolve user query Use tools then give the answer"
+
+
+agent = Agent(
+    model=MODEL,
+    tools=[calculator,age_calculator,weather,mem0_memory],
+    system_prompt=prompt,
+    callback_handler=stream_callback
+
+)  # Replace this line
 
 
 # ============================================================
@@ -79,8 +123,7 @@ while True:
             break
 
         print("\nAgent: ", end="")
-        # TODO: Call the agent with user_input
-        print("[TODO - call agent here]")
+        agent(user_input)
         print()
 
     except KeyboardInterrupt:

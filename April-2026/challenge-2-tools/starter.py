@@ -11,11 +11,11 @@ Instructions:
 
 import os
 os.environ["BYPASS_TOOL_CONSENT"] = "true"
-
+import requests
 from datetime import date, datetime
 from strands import Agent, tool
 from strands_tools import calculator
-
+from dateutil.relativedelta import relativedelta
 MODEL = "us.amazon.nova-pro-v1:0"
 
 
@@ -36,6 +36,24 @@ MODEL = "us.amazon.nova-pro-v1:0"
 #     # TODO: Implement this function
 #     pass
 
+@tool
+def weather(city: str) -> str:
+  """This tool is used to get weather for a city
+    Args :
+      city: name of the city
+  """
+  url= f"https://wttr.in/{city}?format=j1"
+  response = requests.get(url)
+  data = response.json()
+
+  current = data["current_condition"][0]
+
+  return (
+        f"Weather in {city}: "
+        f"{current['temp_C']}°C, "
+        f"{current['weatherDesc'][0]['value']}"
+
+    )
 
 # ============================================================
 # TODO 2: Create a custom age calculator tool
@@ -53,13 +71,25 @@ MODEL = "us.amazon.nova-pro-v1:0"
 #     # TODO: Implement this function
 #     pass
 
+@tool
+def age_calculator(birth_date: str) -> str:
+    """Calculate age from a birth date."""
+
+    birth_date = birth_date.replace("/", "-")
+
+    dob = datetime.strptime(birth_date, "%Y-%m-%d").date()
+
+    age = relativedelta(date.today(), dob)
+
+    return f"{age.years} years, {age.months} months, {age.days} days"
+
 
 # ============================================================
 # TODO 3: Create an agent with all tools
 # ============================================================
 # Hint: Agent(model=MODEL, tools=[calculator, weather, age_calculator], ...)
-
-agent = None  # Replace this line
+sys ="You are a helpful ai assitant, use tools then only answer the user query "
+agent = Agent(model =MODEL,tools=[calculator,weather,age_calculator],system_prompt=sys)  # Replace this line
 
 
 # ============================================================
@@ -67,19 +97,22 @@ agent = None  # Replace this line
 # ============================================================
 
 # Test math
-print("🧮 Math test:")
+#print("🧮 Math test:")
 # response = agent("What is 42 * 17?")
 # print(response)
 
 # Test weather
-print("\n🌤️ Weather test:")
+#print("\n🌤️ Weather test:")
 # response = agent("What's the weather in Chennai?")
 # print(response)
 
 # Test age
-print("\n🎂 Age test:")
+#print("\n🎂 Age test:")
 # response = agent("How old is someone born on 2000-05-15?")
 # print(response)
-
+ip= input("USER:")
+while ip != "END":
+  agent(ip)
+  ip= input("USER:")
 
 print("\n✅ Challenge 2 complete!")

@@ -23,6 +23,7 @@ MODEL = "us.amazon.nova-pro-v1:0"
 # Hint: from strands_tools import mem0_memory
 
 # Your import here
+from strands_tools import mem0_memory
 
 
 # ============================================================
@@ -30,8 +31,8 @@ MODEL = "us.amazon.nova-pro-v1:0"
 # ============================================================
 # Hint: Agent(model=MODEL, tools=[mem0_memory], system_prompt="...")
 # System prompt should tell the agent to store and recall user preferences
-
-agent = None  # Replace this line
+sys= """You are a helpful assistant called 'Pixie' , answer the user in short answer but simple and accurate"""
+agent = Agent(model = MODEL, tools =[mem0_memory],system_prompt=sys)  # Replace this line
 
 
 # ============================================================
@@ -51,10 +52,11 @@ while True:
         if user_input.lower() in ("quit", "exit", "q"):
             print("Bye! 👋")
             break
-
+        
         # TODO: Send user_input to the agent and print the response
         # Hint: response = agent(user_input)
-        print("Agent: [TODO - call the agent here]")
+        print("Agent: ")
+        response = agent(user_input)
 
     except KeyboardInterrupt:
         print("\nBye! 👋")
